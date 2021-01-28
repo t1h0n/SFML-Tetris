@@ -105,7 +105,7 @@ namespace Blocks {
 	{
 		for (const auto& sprite : blck.m_Sprites) {
 			int x = static_cast<unsigned int>((sprite.getPosition().x - wallSize) / blockSize), y = static_cast<unsigned int>((sprite.getPosition().y) / blockSize);
-			if (m_SpriteMatrix[y][x].getPosition() != sf::Vector2f{ -10000.f, -10000.f })
+			if (m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return false;
 		}
 		return true;
@@ -120,7 +120,7 @@ namespace Blocks {
 				//map blocks position to a grid
 				auto newPos = sprite.getPosition() + sf::Vector2f{ 0, blockSize };
 				int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
-				if (y == BlockCountY || m_SpriteMatrix[y][x].getPosition() != sf::Vector2f{ -10000.f, -10000.f }) {
+				if (y == BlockCountY || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition) {
 					//add block to map and reset godown time
 					addBlockToMap(blck);
 					m_CurrentTime = 0;
@@ -144,7 +144,7 @@ namespace Blocks {
 		{
 			auto newPos = sprite.getPosition() + sf::Vector2f{ -blockSize, 0.f };
 			int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
-			if (x < 0 || m_SpriteMatrix[y][x].getPosition() != sf::Vector2f{ -10000.f, -10000.f })
+			if (x < 0 || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return;
 		}
 		blck.move({ -blockSize, 0.f });
@@ -156,7 +156,7 @@ namespace Blocks {
 		{
 			auto newPos = sprite.getPosition() + sf::Vector2f{ blockSize, 0.f };
 			int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
-			if (x >= BlockCountX || m_SpriteMatrix[y][x].getPosition() != sf::Vector2f{ -10000.f, -10000.f })
+			if (x >= BlockCountX || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return;
 		}
 		blck.move({ blockSize, 0.f });
@@ -168,7 +168,7 @@ namespace Blocks {
 		for (const auto& newPos : newPositionOfBlock)
 		{
 			int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
-			if (x >= BlockCountX || y >= BlockCountY || x < 0 || y < 0 || m_SpriteMatrix[y][x].getPosition() != sf::Vector2f{ -10000.f, -10000.f })
+			if (x >= BlockCountX || y >= BlockCountY || x < 0 || y < 0 || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return;
 		}
 		blck.rotate();
@@ -185,8 +185,8 @@ namespace Blocks {
 	void BlockMap::resetBoard()
 	{
 		for (auto& row : m_SpriteMatrix)
-			for (auto& column : row)
-				column.setPosition({ -10000.f, -10000.f });
+			for (auto& sprite : row)
+				sprite.setPosition(m_InvalidPosition);
 		m_Score = 0;
 	}
 
@@ -208,7 +208,7 @@ namespace Blocks {
 		{
 			bool rowIsFull{ true };
 			for (auto sprite = m_SpriteMatrix[i].begin(); sprite != m_SpriteMatrix[i].end(); ++sprite) {
-				if (sprite->getPosition() == sf::Vector2f{ -10000.f, -10000.f })
+				if (sprite->getPosition() == m_InvalidPosition)
 				{
 					rowIsFull = false;
 					break;
@@ -217,7 +217,7 @@ namespace Blocks {
 			if (rowIsFull) {
 				numberOfFullRows += 1;
 				for (auto& sprite : m_SpriteMatrix[i])
-					sprite.setPosition(sf::Vector2f{ -10000.f, -10000.f });
+					sprite.setPosition(m_InvalidPosition);
 				swapRowsUpwards(i);
 			}
 		}
@@ -230,7 +230,7 @@ namespace Blocks {
 		while (nextPosition > 0)
 		{
 			for (auto sprite = m_SpriteMatrix[nextPosition].begin(); sprite != m_SpriteMatrix[nextPosition].end(); ++sprite) {
-				if (sprite->getPosition() != sf::Vector2f{ -10000.f, -10000.f }) {
+				if (sprite->getPosition() != m_InvalidPosition) {
 					sprite->setPosition(sprite->getPosition() + sf::Vector2f{ 0.f, blockSize });
 				}
 			}

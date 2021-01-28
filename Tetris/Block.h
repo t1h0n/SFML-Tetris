@@ -72,8 +72,9 @@ namespace Blocks {
 		//score
 		unsigned m_Score{ 0 };
 		unsigned m_PreviousScore{ 1 };
+		const sf::Vector2f m_InvalidPosition{ -10000.f, -10000.f };
 		sf::String m_ChachedScore;
-		//m_Sprites map
+		//sprites map
 		std::vector<std::vector<sf::Sprite>> m_SpriteMatrix;
 		//recources
 		sf::Texture m_WallsTexture;
