@@ -2,7 +2,11 @@
 #include <memory>
 #include <SFML/Graphics.hpp>
 
-Game::Game()
+static constexpr float moveDownTime = 0.6f;
+
+Game::Game():
+	m_SpaceKeyIsReleased(true),
+	m_BlockMap(moveDownTime)
 {
 	initText();
 	initWindow();
@@ -52,12 +56,12 @@ void Game::run()
 		//handle block movement downwards
 		msc = clk.restart().asSeconds();
 		m_Window->setTitle(std::to_string(static_cast<int>(1 / msc)).c_str());
-		auto moveCode = m_BlockMap.moveBlockDown(m_CurrentBlock, msc);
-		handleBlockMovement(moveCode);
+		m_BlockMap.moveBlockDown(m_CurrentBlock, msc);
+		handleBlockMovement();
 		if (m_BlockArrows)
 		{
-			moveCode = m_BlockMap.moveBlockDown(m_CurrentBlock, msc * 5);
-			handleBlockMovement(moveCode);
+			m_BlockMap.moveBlockDown(m_CurrentBlock, msc * 5);
+			handleBlockMovement();
 		}
 		m_Score.setString(m_BlockMap.getScore());
 
@@ -66,9 +70,9 @@ void Game::run()
 	}
 }
 
-void Game::handleBlockMovement(Blocks::BlockMap::MoveCode moveCode)
+void Game::handleBlockMovement()
 {
-	if (moveCode == Blocks::BlockMap::MoveCode::BlockCollided) {
+	if (m_BlockMap.isBlockCollided()) {
 		m_CurrentBlock = m_NextBlock;
 		m_NextBlock = m_BlockGenerator.getRandomBlock();
 		m_NextBlock.move({ 24.f , 792.f });
@@ -80,7 +84,7 @@ void Game::handleBlockMovement(Blocks::BlockMap::MoveCode moveCode)
 		}
 		m_BlockArrows = false;
 	}
-	else if (moveCode == Blocks::BlockMap::MoveCode::GameOver) {
+	else if (m_BlockMap.isGameOver()) {
 		m_BlockMap.resetBoard();
 		initBlocks();
 	}

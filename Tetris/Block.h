@@ -7,10 +7,6 @@
 #include <functional>
 
 namespace Blocks {
-	constexpr int BlockCountX = 12;
-	constexpr int BlockCountY = 12;
-	constexpr float blockSize = 64.f;
-	constexpr float wallSize = 16.f;
 
 	struct Block
 	{
@@ -33,47 +29,53 @@ namespace Blocks {
 		BlockGenerator();
 		Block getRandomBlock()const;
 	private:
-		std::function<int()> m_GetRandomBlock;
+		std::function<int()> m_GetRandomBlockIndex;
 		//recources
 		std::vector<Block> m_BlockTypes;
 		std::vector<sf::Texture> m_TextureTypes;
 		std::default_random_engine m_Generator;
-		std::uniform_int_distribution<int> m_UniformDistribution{ 0, 6 };
+		std::uniform_int_distribution<int> m_UniformDistribution;
 	};
 
 	class BlockMap {
 	public:
+		BlockMap(float moveDownTime);
+		void draw(sf::RenderWindow& w)const;
+		//check the state of current block
+		bool isGameOver()const;
+		bool isBlockMovedNormally()const;
+		bool isBlockCollided()const;
+
+		sf::String getScore();
+
+		bool checkIfBlockCanBePlaced(Block& blck)const;
+		//move
+		void moveBlockDown(Block& blck, float dltTime);
+		void moveBlockLeft(Block& blck)const;
+		void moveBlockRight(Block& blck)const;
+		void rotateBlock(Block& blck);
+		void resetBoard();
+	private:
 		enum class MoveCode
 		{
 			GameOver = -1,
 			BlockMovedNormally = 0,
 			BlockCollided = 1
 		};
-		BlockMap(float moveDownTime);
-		void draw(sf::RenderWindow& w)const; //draws cells
-
-
-		bool checkIfBlockCanBePlaced(Block& blck)const;
-		//move
-		MoveCode moveBlockDown(Block& blck, float dltTime);
-		void moveBlockLeft(Block& blck)const;
-		void moveBlockRight(Block& blck)const;
-		void rotateBlock(Block& blck);
-		//checks if rotation is possible and if it is, rotates block
-		void resetBoard();
-		sf::String getScore();
-	private:
-		void addBlockToMap(Block& blck);//should be in private
+		void addBlockToMap(Block& blck);
 		bool blockCollidedAtZeroY(Block& blck)const;
-		int destroyFullRows();//collided
-		void swapRowsUpwards(size_t currentPosition);
+		int destroyFullRows();
+		void swapRowsUpwards(int currentPosition);
+		//block move
+		MoveCode m_StateOfCurrentBlock;
 		float m_MoveDownTime;
-		float m_CurrentTime{ 0 };
+		float m_CurrentTime;
 		//score
-		unsigned m_Score{ 0 };
-		unsigned m_PreviousScore{ 1 };
-		const sf::Vector2f m_InvalidPosition{ -10000.f, -10000.f };
+		unsigned m_Score;
+		unsigned m_PreviousScore;
 		sf::String m_ChachedScore;
+
+		const sf::Vector2f m_InvalidPosition;
 		//sprites map
 		std::vector<std::vector<sf::Sprite>> m_SpriteMatrix;
 		//recources

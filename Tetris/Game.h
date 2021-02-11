@@ -10,18 +10,18 @@ private:
 	sf::Event event;
 	sf::VideoMode videoMode;
 	//game  vars
-	bool m_SpaceKeyIsReleased{ true };
+	bool m_SpaceKeyIsReleased;
 	bool m_BlockArrows;
 	Blocks::Block m_CurrentBlock;
 	Blocks::Block m_NextBlock;
 	Blocks::BlockGenerator m_BlockGenerator;
-	Blocks::BlockMap m_BlockMap{ 0.6f };
+	Blocks::BlockMap m_BlockMap;
 	//recources
 	sf::Text m_Score;
 	sf::Font m_Font;
 
 	//game logic
-	void handleBlockMovement(Blocks::BlockMap::MoveCode moveCode);
+	void handleBlockMovement();
 	void initBlocks();
 	void initWindow();
 	void initText();

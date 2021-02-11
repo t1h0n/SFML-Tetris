@@ -6,6 +6,11 @@
 #include <sstream>
 
 namespace Blocks {
+	static constexpr int BlockCountX = 12;
+	static constexpr int BlockCountY = 12;
+	static constexpr float blockSize = 64.f;
+	static constexpr float wallSize = 16.f;
+
 	Block::Block(const std::array<sf::Vector2f, 4>& _SpritesPosition, const sf::Vector2f& _RotationCenter, sf::Texture& texture)
 		: m_RotationCenter(_RotationCenter* blockSize)
 	{
@@ -47,8 +52,23 @@ namespace Blocks {
 	}
 
 
+	bool BlockMap::isGameOver() const
+	{
+		return m_StateOfCurrentBlock == MoveCode::GameOver;
+	}
+
+	bool BlockMap::isBlockMovedNormally() const
+	{
+		return m_StateOfCurrentBlock == MoveCode::BlockMovedNormally;
+	}
+
+	bool BlockMap::isBlockCollided() const
+	{
+		return m_StateOfCurrentBlock == MoveCode::BlockCollided;
+	}
+
 	BlockMap::BlockMap(float moveDownTime)
-		:m_MoveDownTime(moveDownTime)
+		:m_MoveDownTime(moveDownTime), m_CurrentTime(0), m_Score(0), m_PreviousScore(1), m_InvalidPosition( -10000.f, -10000.f )
 	{
 		//generate space for dynammic containers //TODO: rewrite with pregenerated walls
 		m_WallsSprites.resize(183);//9+9+18
@@ -97,21 +117,21 @@ namespace Blocks {
 	void BlockMap::addBlockToMap(Block& blck)
 	{
 		for (auto& sprite : blck.m_Sprites) {
-			m_SpriteMatrix[static_cast<unsigned int>(sprite.getPosition().y / blockSize)][static_cast<unsigned int>((sprite.getPosition().x - wallSize) / blockSize)] = std::move(sprite);
+			m_SpriteMatrix[static_cast<size_t>(sprite.getPosition().y / blockSize)][static_cast<size_t>((sprite.getPosition().x - wallSize) / blockSize)] = std::move(sprite);
 		}
 	}
 
 	bool BlockMap::checkIfBlockCanBePlaced(Block& blck)const
 	{
 		for (const auto& sprite : blck.m_Sprites) {
-			int x = static_cast<unsigned int>((sprite.getPosition().x - wallSize) / blockSize), y = static_cast<unsigned int>((sprite.getPosition().y) / blockSize);
+			size_t x = static_cast<size_t>((sprite.getPosition().x - wallSize) / blockSize), y = static_cast<size_t>((sprite.getPosition().y) / blockSize);
 			if (m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return false;
 		}
 		return true;
 	}
 
-	BlockMap::MoveCode BlockMap::moveBlockDown(Block& blck, float dltTime)//-1 game over; 0 block is moved dowm normally; 1 block has collided with another block
+	void BlockMap::moveBlockDown(Block& blck, float dltTime)//-1 game over; 0 block is moved dowm normally; 1 block has collided with another block
 	{
 		m_CurrentTime += dltTime;
 		if (m_CurrentTime >= m_MoveDownTime)
@@ -119,7 +139,7 @@ namespace Blocks {
 			for (const auto& sprite : blck.m_Sprites) {
 				//map blocks position to a grid
 				auto newPos = sprite.getPosition() + sf::Vector2f{ 0, blockSize };
-				int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
+				int x = static_cast<int>((newPos.x - wallSize) / blockSize), y = static_cast<int>((newPos.y) / blockSize);
 				if (y == BlockCountY || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition) {
 					//add block to map and reset godown time
 					addBlockToMap(blck);
@@ -128,14 +148,16 @@ namespace Blocks {
 					m_Score += destroyFullRows();
 					//checking if the game is over
 					if (blockCollidedAtZeroY(blck))
-						return BlockMap::MoveCode::GameOver;
-					return BlockMap::MoveCode::BlockCollided;
+						m_StateOfCurrentBlock = MoveCode::GameOver;
+					else
+						m_StateOfCurrentBlock = MoveCode::BlockCollided;
+					return;
 				}
 			}
 			blck.move({ 0, blockSize });
 			m_CurrentTime = 0;
 		}
-		return BlockMap::MoveCode::BlockMovedNormally;
+		m_StateOfCurrentBlock = MoveCode::BlockMovedNormally;
 	}
 
 	void BlockMap::moveBlockLeft(Block& blck)const
@@ -143,7 +165,7 @@ namespace Blocks {
 		for (const auto& sprite : blck.m_Sprites)
 		{
 			auto newPos = sprite.getPosition() + sf::Vector2f{ -blockSize, 0.f };
-			int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
+			int x = static_cast<int>((newPos.x - wallSize) / blockSize), y = static_cast<int>((newPos.y) / blockSize);
 			if (x < 0 || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return;
 		}
@@ -155,7 +177,7 @@ namespace Blocks {
 		for (const auto& sprite : blck.m_Sprites)
 		{
 			auto newPos = sprite.getPosition() + sf::Vector2f{ blockSize, 0.f };
-			int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
+			int x = static_cast<int>((newPos.x - wallSize) / blockSize), y = static_cast<int>((newPos.y) / blockSize);
 			if (x >= BlockCountX || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return;
 		}
@@ -167,7 +189,7 @@ namespace Blocks {
 		auto newPositionOfBlock = blck.getCoordsAfterRotation();
 		for (const auto& newPos : newPositionOfBlock)
 		{
-			int x = static_cast<unsigned int>((newPos.x - wallSize) / blockSize), y = static_cast<unsigned int>((newPos.y) / blockSize);
+			int x = static_cast<int>((newPos.x - wallSize) / blockSize), y = static_cast<int>((newPos.y) / blockSize);
 			if (x >= BlockCountX || y >= BlockCountY || x < 0 || y < 0 || m_SpriteMatrix[y][x].getPosition() != m_InvalidPosition)
 				return;
 		}
@@ -203,7 +225,7 @@ namespace Blocks {
 
 	int BlockMap::destroyFullRows()
 	{
-		size_t numberOfFullRows{ 0 };
+		unsigned numberOfFullRows{ 0 };
 		for (size_t i{ 0 }; i < m_SpriteMatrix.size(); ++i)
 		{
 			bool rowIsFull{ true };
@@ -224,9 +246,9 @@ namespace Blocks {
 		return numberOfFullRows * numberOfFullRows * 100;
 	}
 
-	void BlockMap::swapRowsUpwards(size_t currentPosition)
+	void BlockMap::swapRowsUpwards(int currentPosition)
 	{
-		size_t nextPosition{ currentPosition - 1 };
+		int nextPosition{ currentPosition - 1 };
 		while (nextPosition > 0)
 		{
 			for (auto sprite = m_SpriteMatrix[nextPosition].begin(); sprite != m_SpriteMatrix[nextPosition].end(); ++sprite) {
@@ -239,17 +261,18 @@ namespace Blocks {
 			currentPosition--;
 		}
 	}
-	BlockGenerator::BlockGenerator()
+	BlockGenerator::BlockGenerator() :
+		m_UniformDistribution{ 0, 6 }
 	{
 		m_BlockTypes.reserve(7);
 		m_TextureTypes.resize(3);
 		//seeding m_Generator
 		m_Generator.seed(static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
 		//binding generator to distribution
-		m_GetRandomBlock = std::bind(std::ref(m_UniformDistribution), std::ref(m_Generator));
+		m_GetRandomBlockIndex = std::bind(std::ref(m_UniformDistribution), std::ref(m_Generator));
 		//loading block textures
-		for (int i{ 0 }; i < 3; ++i)
-			if (!m_TextureTypes[i].loadFromFile("Recources/block_textures.png", sf::IntRect(80, 8 + (static_cast<int>(blockSize) + 8) * i, 64, 64)))
+		for (size_t i{ 0 }; i < 3; ++i)
+			if (!m_TextureTypes[i].loadFromFile("Recources/block_textures.png", sf::IntRect(80, 8 + (blockSize + 8) * i, 64, 64)))
 				static_assert(1, "failed to load textures");
 		//creating block types
 		m_BlockTypes.push_back(Block({ { {0.0f, 0.0f}, {1.0f, 0.0f}, {2.0f, 0.0f}, {3.0f, 0.0f}  } }, { 1.0f, 0.0f }, m_TextureTypes[0]));//I
@@ -263,6 +286,6 @@ namespace Blocks {
 
 	Block BlockGenerator::getRandomBlock()const
 	{
-		return m_BlockTypes[m_GetRandomBlock()];
+		return m_BlockTypes[m_GetRandomBlockIndex()];
 	}
 }
