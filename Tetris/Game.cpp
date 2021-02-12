@@ -4,7 +4,7 @@
 
 static constexpr float moveDownTime = 0.6f;
 
-Game::Game():
+Game::Game() :
 	m_SpaceKeyIsReleased(true),
 	m_BlockMap(moveDownTime)
 {
@@ -13,9 +13,6 @@ Game::Game():
 	initBlocks();
 }
 
-Game::~Game()
-{
-}
 void Game::initText() {
 	if (!m_Font.loadFromFile("Recources/courbd.ttf"))
 		static_assert(2, "failed to load font");
@@ -24,6 +21,18 @@ void Game::initText() {
 	m_Score.setCharacterSize(80);
 	m_Score.setPosition({ 312.f , 804.f });
 	m_Score.setFillColor({ 255, 255, 103 });
+	m_Score.setString(m_BlockMap.getScore());
+}
+
+void Game::onUpdate(float dlt)
+{
+	m_Window->setTitle(std::to_string(static_cast<int>(1 / dlt)).c_str());
+	if (m_BlockArrows)
+		m_BlockMap.moveBlockDown(m_CurrentBlock, dlt * 10);
+	else
+		m_BlockMap.moveBlockDown(m_CurrentBlock, dlt);
+
+	handleBlockMovement();
 	m_Score.setString(m_BlockMap.getScore());
 }
 
@@ -48,24 +57,12 @@ void Game::initWindow()
 void Game::run()
 {
 	sf::Clock clk;
-	float msc{};
+	float dlt{};
 	while (m_Window->isOpen())
 	{
-		//handle user movement
-		onUpdate();
-		//handle block movement downwards
-		msc = clk.restart().asSeconds();
-		m_Window->setTitle(std::to_string(static_cast<int>(1 / msc)).c_str());
-		m_BlockMap.moveBlockDown(m_CurrentBlock, msc);
-		handleBlockMovement();
-		if (m_BlockArrows)
-		{
-			m_BlockMap.moveBlockDown(m_CurrentBlock, msc * 5);
-			handleBlockMovement();
-		}
-		m_Score.setString(m_BlockMap.getScore());
-
-		//render
+		processKeys();
+		dlt = clk.restart().asSeconds();
+		onUpdate(dlt);
 		onRender();
 	}
 }
@@ -89,7 +86,7 @@ void Game::handleBlockMovement()
 		initBlocks();
 	}
 }
-void Game::onUpdate()
+void Game::processKeys()
 {
 	while (m_Window->pollEvent(this->event)) {
 		if (event.type == sf::Event::Closed)
@@ -110,7 +107,7 @@ void Game::onUpdate()
 				m_BlockArrows = true;
 			}
 		}
-		else if (event.type == sf::Event::KeyReleased) 
+		else if (event.type == sf::Event::KeyReleased)
 		{
 			if (event.key.code == sf::Keyboard::Space)
 				m_SpaceKeyIsReleased = true;

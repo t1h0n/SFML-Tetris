@@ -25,12 +25,11 @@ private:
 	void initBlocks();
 	void initWindow();
 	void initText();
-	void onUpdate();
+	void processKeys();
+	void onUpdate(float dlt);
 	void onRender();
 public:
 	Game();
-	~Game();
-
 	void run();
 };
 
