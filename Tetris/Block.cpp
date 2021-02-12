@@ -19,10 +19,11 @@ namespace Blocks {
 			m_Sprites[i].setPosition(_SpritesPosition[i] * blockSize);
 		}
 	}
-	void Block::draw(sf::RenderWindow& w)const
+
+	void Block::draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
 		for (const auto& sprite : m_Sprites)
-			w.draw(sprite);
+			target.draw(sprite, states);
 	}
 
 	void Block::move(const sf::Vector2f& amount)
@@ -105,13 +106,13 @@ namespace Blocks {
 			wall.setTexture(m_WallsTexture);
 	}
 
-	void BlockMap::draw(sf::RenderWindow& w)const
+	void BlockMap::draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
 		for (const auto& sprite_vec : m_SpriteMatrix)
 			for (const auto& sprite : sprite_vec)
-				w.draw(sprite);
+				target.draw(sprite, states);
 		for (const auto& wall : m_WallsSprites)
-			w.draw(wall);
+			target.draw(wall, states);
 	}
 
 	void BlockMap::addBlockToMap(Block& blck)
@@ -272,7 +273,7 @@ namespace Blocks {
 		m_GetRandomBlockIndex = std::bind(std::ref(m_UniformDistribution), std::ref(m_Generator));
 		//loading block textures
 		for (size_t i{ 0 }; i < 3; ++i)
-			if (!m_TextureTypes[i].loadFromFile("Recources/block_textures.png", sf::IntRect(80, 8 + (blockSize + 8) * i, 64, 64)))
+			if (!m_TextureTypes[i].loadFromFile("Recources/block_textures.png", sf::IntRect(80, 8 + static_cast<int>(blockSize + 8) * i, 64, 64)))
 				static_assert(1, "failed to load textures");
 		//creating block types
 		m_BlockTypes.push_back(Block({ { {0.0f, 0.0f}, {1.0f, 0.0f}, {2.0f, 0.0f}, {3.0f, 0.0f}  } }, { 1.0f, 0.0f }, m_TextureTypes[0]));//I

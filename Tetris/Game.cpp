@@ -121,9 +121,9 @@ void Game::onUpdate()
 void Game::onRender()
 {
 	m_Window->clear();
-	m_CurrentBlock.draw(*m_Window);
-	m_NextBlock.draw(*m_Window);
-	m_BlockMap.draw(*m_Window);
+	m_Window->draw(m_CurrentBlock);
+	m_Window->draw(m_NextBlock);
+	m_Window->draw(m_BlockMap);
 	m_Window->draw(m_Score);
 	m_Window->display();
 }

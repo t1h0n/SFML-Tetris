@@ -8,12 +8,13 @@
 
 namespace Blocks {
 
-	struct Block
+	class Block : public sf::Drawable
 	{
+	public:
 		Block(const std::array<sf::Vector2f, 4>& _SpritesPosition, const sf::Vector2f& _RotationCenter, sf::Texture& texture);
 		Block() = default;
 
-		void draw(sf::RenderWindow& w)const;
+		void draw(sf::RenderTarget& target, sf::RenderStates states)const override;
 		void move(const sf::Vector2f& amount);
 		void rotate();
 	private:
@@ -37,10 +38,12 @@ namespace Blocks {
 		std::uniform_int_distribution<int> m_UniformDistribution;
 	};
 
-	class BlockMap {
+	class BlockMap :public sf::Drawable
+	{
 	public:
 		BlockMap(float moveDownTime);
-		void draw(sf::RenderWindow& w)const;
+
+		void draw(sf::RenderTarget& target, sf::RenderStates states)const override;
 		//check the state of current block
 		bool isGameOver()const;
 		bool isBlockMovedNormally()const;
