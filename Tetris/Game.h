@@ -29,8 +29,6 @@ private:
 	void onRender();
 public:
 	Game();
-	~Game();
-
 	void run();
 };
 

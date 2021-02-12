@@ -13,9 +13,6 @@ Game::Game():
 	initBlocks();
 }
 
-Game::~Game()
-{
-}
 void Game::initText() {
 	if (!m_Font.loadFromFile("Recources/courbd.ttf"))
 		static_assert(2, "failed to load font");
